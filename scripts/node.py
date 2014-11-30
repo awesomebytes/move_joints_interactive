@@ -60,7 +60,7 @@ class InteractiveJointTrajCtrl():
                 publishers_dict[cs.name]['pub'] = rospy.Publisher(cmd_topic, JointTrajectory)
                 publishers_dict[cs.name]['ims'] = []
                 for joint_name in publishers_dict[cs.name]['joints']:
-                    publishers_dict[cs.name]['ims'].append( LinkInteractiveMarker(joint_name))
+                    publishers_dict[cs.name]['ims'].append( LinkInteractiveMarker(joint_name, cs.name, cs.resources))
                     
     
     def run(self):
