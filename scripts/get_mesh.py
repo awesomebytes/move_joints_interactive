@@ -11,12 +11,11 @@ from math import pi
 import rospy
 
 
-def get_mesh(link_name, key='robot_description'):
+def get_link_mesh_info(link_name, key='robot_description'):
     description = rospy.get_param(key)
     robot = xml.dom.minidom.parseString(description).getElementsByTagName('robot')[0]
     mesh_path = ""
     mesh_scale = None
-    # Find all non-fixed joints
     for child in robot.childNodes:
         #print "child is: " + str(child)
         if child.nodeType is child.TEXT_NODE:
@@ -37,15 +36,12 @@ def get_mesh(link_name, key='robot_description'):
                         mesh_tag = _child.getElementsByTagName('mesh')[0]
                         mesh_path = mesh_tag.getAttribute('filename')
                         mesh_scale = mesh_tag.getAttribute('scale')
-         
-            
-            
     return mesh_path, mesh_scale
 
 
 if __name__=="__main__":
     rospy.init_node("test_get_mesh")
-    mesh_path, mesh_scale = get_mesh("arm_right_2_link")
+    mesh_path, mesh_scale = get_link_mesh_info("arm_right_2_link")
     print "mesh path: " + str(mesh_path)
     print "mesh_scale: " + str(mesh_scale)
     
