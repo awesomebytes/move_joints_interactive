@@ -15,10 +15,10 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 from get_mesh_urdf import get_link_mesh_info
 from joint_limits_urdf import get_joint_limits
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Quaternion
 
 class LinkInteractiveMarker():
-    IM_MARKER_SCALE = 0.2
+    IM_MARKER_SCALE = 0.25
     
     def __init__(self, joint_name, controller_name, joint_names):
         rospy.loginfo("Creating interactive marker for: " + str(joint_name))
@@ -84,9 +84,9 @@ class LinkInteractiveMarker():
         mesh_path, mesh_scale = get_link_mesh_info(self.base_name + '_link')
         if mesh_path == "": # if no mesh found, put a cylinder, works for reemc
             marker.type = Marker.CYLINDER
-            marker.scale.x = 0.2
-            marker.scale.y = 0.2
-            marker.scale.z = 0.2
+            marker.scale.x = 0.05
+            marker.scale.y = 0.05
+            marker.scale.z = 0.05
         else:
             marker.type = Marker.MESH_RESOURCE
             marker.mesh_resource = str(mesh_path)
@@ -125,32 +125,29 @@ class LinkInteractiveMarker():
             
         ori = feedback.pose.orientation
         roll, pitch, yaw = euler_from_quaternion([ori.x, ori.y, ori.z, ori.w])
-        rospy.loginfo("r p y = " + str((roll, pitch, yaw)))
+        #rospy.loginfo("r p y = " + str((roll, pitch, yaw)))
+
         
-        if feedback.event_type == InteractiveMarkerFeedback.BUTTON_CLICK:
-            rospy.loginfo( s + ": button click" + mp + "." )
-        elif feedback.event_type == InteractiveMarkerFeedback.MENU_SELECT:
-            rospy.loginfo( s + ": menu item " + str(feedback.menu_entry_id) + " clicked" + mp + "." )
-        elif feedback.event_type == InteractiveMarkerFeedback.POSE_UPDATE:
-            rospy.loginfo( s + ": pose changed")
-        elif feedback.event_type == InteractiveMarkerFeedback.MOUSE_DOWN:
-            rospy.loginfo( s + ": mouse down" + mp + "." )
-        elif feedback.event_type == InteractiveMarkerFeedback.MOUSE_UP:
+#         if feedback.event_type == InteractiveMarkerFeedback.BUTTON_CLICK:
+#             rospy.loginfo( s + ": button click" + mp + "." )
+#         elif feedback.event_type == InteractiveMarkerFeedback.MENU_SELECT:
+#             rospy.loginfo( s + ": menu item " + str(feedback.menu_entry_id) + " clicked" + mp + "." )
+#         if feedback.event_type == InteractiveMarkerFeedback.POSE_UPDATE:
+#             rospy.loginfo( s + ": pose changed")
+#             
+#         elif feedback.event_type == InteractiveMarkerFeedback.MOUSE_DOWN:
+#             rospy.loginfo( s + ": mouse down" + mp + "." )
+        if feedback.event_type == InteractiveMarkerFeedback.MOUSE_UP:
             rospy.loginfo( s + ": mouse up" + mp + "." )
+            #rospy.loginfo("Sending yaw: " + str(yaw))
             self.createGoalWithValueAndPublish(yaw)
             #self.ims.applyChanges()
-            # set up the marker in the current pose
-            self.ims.setPose("rotate_" + self.base_name + "_joint", Pose(), header=Header(frame_id = self.base_name +"_link"))
+        # set up the marker in the current pose
+        self.ims.setPose("rotate_" + self.base_name + "_joint", 
+                         Pose(orientation=Quaternion(w=1.0)), header=Header(frame_id = self.base_name +"_link"))
+        self.ims.applyChanges()
 
-        # With this we apply joint limits
-        if yaw > self.upper_joint_limit:
-            rospy.logwarn("Going over upper joint limit on " + self.base_name +
-                          " val: " + str(yaw) + " > " + str(self.upper_joint_limit))
-            return
-        if yaw < self.lower_joint_limit:
-            rospy.logwarn("Going under lower joint limit on " + self.base_name +
-                          " val: " + str(yaw) + " > " + str(self.lower_joint_limit))
-            return
+
         #self.ims.applyChanges()
 
 
@@ -168,7 +165,8 @@ class LinkInteractiveMarker():
         jtp.velocities = [0.0] * len(self.joint_names)
         jtp.accelerations = [0.0] * len(self.joint_names)
         # TODO: Make duration dependent on how big is the movement
-        jtp.time_from_start = rospy.Duration(1.0) 
+        scaled_time = abs(value) * 1.5 + 0.2
+        jtp.time_from_start = rospy.Duration(scaled_time) 
         jt.points.append(jtp)
         self.pub.publish(jt)
         rospy.sleep(1.0)
@@ -188,7 +186,19 @@ class LinkInteractiveMarker():
             idx_in_message = curr_j_s.name.index(joint)
             ids_list.append(idx_in_message)
             if joint == joint_to_overwrite:
-                msg_list.append(value_to_overwrite)
+                # Apply joint limits
+                final_value = curr_j_s.position[idx_in_message] + value_to_overwrite
+                if final_value > self.upper_joint_limit:
+                    rospy.logwarn("Going over upper joint limit on " + self.base_name +
+                                  " val: " + str(final_value) + " > " + str(self.upper_joint_limit)
+                                  + " setting upper joint limit.")
+                    final_value = self.upper_joint_limit
+                if final_value < self.lower_joint_limit:
+                    rospy.logwarn("Going under lower joint limit on " + self.base_name +
+                                  " val: " + str(final_value) + " > " + str(self.lower_joint_limit)
+                                  + " setting lower joint limit.")
+                    final_value = self.lower_joint_limit
+                msg_list.append(final_value)
             else:
                 msg_list.append(curr_j_s.position[idx_in_message])
         rospy.logdebug("Current position of joints in message: " + str(ids_list))

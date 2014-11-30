@@ -9,6 +9,8 @@ When the Interactive Marker is moved the joint limits previously parsed are chec
 between the joint limits a goal for the controller is created (by checking current joint states and overriding with the new
 value in the goal).
 
+=== 
+
 TODO: 
 * Check IK if the movement is safe (make it optional but enabled by default).
 * Fix the visualization, when you move a joint, it moves twice (the amount you moved 

@@ -37,6 +37,8 @@ class InteractiveJointTrajCtrl():
         ctl_mngr_srv.wait_for_service()
         rospy.loginfo("Connected.")
         
+        self.rviz_config_str = ""
+        
         req = ListControllersRequest()
         resp = ctl_mngr_srv.call(req)
         #ListControllersResponse()
@@ -61,7 +63,38 @@ class InteractiveJointTrajCtrl():
                 publishers_dict[cs.name]['ims'] = []
                 for joint_name in publishers_dict[cs.name]['joints']:
                     publishers_dict[cs.name]['ims'].append( LinkInteractiveMarker(joint_name, cs.name, cs.resources))
-                    
+                    curr_im_rviz_cfg = self.create_im_config_rviz_block(joint_name)
+                    self.rviz_config_str += curr_im_rviz_cfg
+        
+        self.save_rviz_config(self.rviz_config_str)
+    
+    def create_im_config_rviz_block(self, joint_name):
+        ims_str = "ims_" + joint_name.replace('_joint', '')
+        template = """        - Class: rviz/InteractiveMarkers
+          Enable Transparency: true
+          Enabled: true
+          Name: """ + ims_str + """
+          Show Axes: false
+          Show Descriptions: true
+          Show Visual Aids: false
+          Update Topic: /""" + ims_str + """/update
+          Value: true\n"""
+        return template
+    
+    def save_rviz_config(self, rviz_cfg):
+        import rospkg
+        rp = rospkg.RosPack()
+        path = rp.get_path("move_joints_interactive")
+        rviztemplate = open(path + "/rviz/template_config.rviz", "r")
+        full_file = rviztemplate.read()
+        rviztemplate.close()
+        #full_file =""
+        final_file = full_file.replace("TEMPLATE_TO_FILL", rviz_cfg)
+        output_f = open(path + "/rviz/current_rviz.rviz", "w")
+        output_f.write(final_file)
+        output_f.close()
+        rospy.loginfo("\nRviz configuration file created at: " + path + "/rviz/current_rviz.rviz")
+    
     
     def run(self):
         rospy.loginfo("Running!")
