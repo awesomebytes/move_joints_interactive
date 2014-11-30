@@ -1,37 +1,12 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Created on 30/11/14
+
+@author: Sam Pfeiffer
 
 """
-Copyright (c) 2011, Willow Garage, Inc.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of the Willow Garage, Inc. nor the names of its
-      contributors may be used to endorse or promote products derived from
-      this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES LOSS OF USE, DATA, OR PROFITS OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-"""
-
-import roslib; roslib.load_manifest("interactive_markers")
 import rospy
-import copy
 
 from interactive_markers.interactive_marker_server import *
 from visualization_msgs.msg import *
@@ -100,12 +75,29 @@ class LinkInteractiveMarker():
     
         # Automatically get mesh resource
         mesh_path, mesh_scale = get_link_mesh_info(self.base_name + '_link')
-        marker.type = Marker.MESH_RESOURCE
-        marker.mesh_resource = str(mesh_path)
-        
-        marker.scale.x = float(mesh_scale.split()[0])
-        marker.scale.y = float(mesh_scale.split()[1])
-        marker.scale.z = float(mesh_scale.split()[2])
+        if mesh_path == "": # if no mesh found, put a cylinder, works for reemc
+            marker.type = Marker.CYLINDER
+            marker.scale.x = 0.2
+            marker.scale.y = 0.2
+            marker.scale.z = 0.2
+        else:
+            marker.type = Marker.MESH_RESOURCE
+            marker.mesh_resource = str(mesh_path)
+            if mesh_scale != None:
+                try:
+                    marker.scale.x = float(mesh_scale.split()[0])
+                    marker.scale.y = float(mesh_scale.split()[1])
+                    marker.scale.z = float(mesh_scale.split()[2])
+                except:
+                    rospy.logwarn("Scale was not correctly found for " + str(self.base_name) +
+                                  ", setting up 1.0 for all dimensions")
+                    marker.scale.x = 1.0
+                    marker.scale.y = 1.0
+                    marker.scale.z = 1.0
+            else:
+                marker.scale.x = 1.0
+                marker.scale.y = 1.0
+                marker.scale.z = 1.0
         marker.color.r = 0.5
         marker.color.g = 0.5
         marker.color.b = 0.5

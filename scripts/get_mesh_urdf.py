@@ -33,9 +33,13 @@ def get_link_mesh_info(link_name, key='robot_description'):
                         continue
                     if _child.localName == 'geometry':
                         #print "found geometry in visual"
-                        mesh_tag = _child.getElementsByTagName('mesh')[0]
-                        mesh_path = mesh_tag.getAttribute('filename')
-                        mesh_scale = mesh_tag.getAttribute('scale')
+                        try: # if there is no mesh, there is some simple shape used most probably
+                            mesh_tag = _child.getElementsByTagName('mesh')[0]
+                            mesh_path = mesh_tag.getAttribute('filename')
+                            mesh_scale = mesh_tag.getAttribute('scale')
+                        except IndexError, e:
+                            print "No mesh or scale found for " + str(link_name)
+
     return mesh_path, mesh_scale
 
 

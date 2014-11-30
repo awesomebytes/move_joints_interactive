@@ -25,6 +25,7 @@ from controller_manager_msgs.srv import ListControllers, ListControllersRequest
 # at https://github.com/ros-controls/ros_controllers/blob/indigo-devel/rqt_joint_trajectory_controller/src/rqt_joint_trajectory_controller/joint_limits_urdf.py
 # as the urdf_dom_py interface gives errors
 from joint_limits_urdf import get_joint_limits
+from im_for_link_class import LinkInteractiveMarker
 
 CONTROLLER_MNGR_SRV = "/controller_manager/list_controllers"
 
@@ -50,13 +51,16 @@ class InteractiveJointTrajCtrl():
         #   ims: [interactive_marker_server_head_1_joint, interactive_marker_server_head_2_joint]
         for cs in resp.controller: # For every controller, create a publisher
             #cs = ControllerState()
+            print "cs.name: " + str(cs.name),
             if len(cs.resources) > 0: # If the controller controls any joint only
+                print "...controls joints!"
+                publishers_dict[cs.name] = {}
                 publishers_dict[cs.name]['joints'] = cs.resources
                 cmd_topic = "/" + cs.name + "/command"
                 publishers_dict[cs.name]['pub'] = rospy.Publisher(cmd_topic, JointTrajectory)
                 publishers_dict[cs.name]['ims'] = []
                 for joint_name in publishers_dict[cs.name]['joints']:
-                    publishers_dict[cs.name]['ims'].append( InteractiveMarkerServer("ims_" + joint_name))
+                    publishers_dict[cs.name]['ims'].append( LinkInteractiveMarker(joint_name))
                     
     
     def run(self):
