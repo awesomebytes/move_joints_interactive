@@ -75,7 +75,7 @@ class InteractiveJointTrajCtrl():
           Enabled: true
           Name: """ + ims_str + """
           Show Axes: false
-          Show Descriptions: true
+          Show Descriptions: false
           Show Visual Aids: false
           Update Topic: /""" + ims_str + """/update
           Value: true\n"""

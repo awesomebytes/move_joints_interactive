@@ -82,12 +82,7 @@ class LinkInteractiveMarker():
     
         # Automatically get mesh resource
         mesh_path, mesh_scale = get_link_mesh_info(self.base_name + '_link')
-        if mesh_path == "": # if no mesh found, put a cylinder, works for reemc
-            marker.type = Marker.CYLINDER
-            marker.scale.x = 0.05
-            marker.scale.y = 0.05
-            marker.scale.z = 0.05
-        else:
+        if "package://" in mesh_path:
             marker.type = Marker.MESH_RESOURCE
             marker.mesh_resource = str(mesh_path)
             if mesh_scale != None:
@@ -105,6 +100,22 @@ class LinkInteractiveMarker():
                 marker.scale.x = 1.0
                 marker.scale.y = 1.0
                 marker.scale.z = 1.0
+        elif mesh_path == "CYLINDER":
+            marker.type = Marker.CYLINDER
+            marker.scale.x = float(mesh_scale["radius"])
+            marker.scale.y = float(mesh_scale["radius"])
+            marker.scale.z = float(mesh_scale["length"])
+        elif mesh_path == "CUBE":
+            marker.type = Marker.CUBE
+            cube_size = mesh_scale["size"].split()
+            marker.scale.x = float(cube_size[0])
+            marker.scale.y = float(cube_size[1])
+            marker.scale.z = float(cube_size[2])
+        elif mesh_path == "SPHERE":
+            marker.type = Marker.SPHERE
+            marker.scale.x = float(mesh_scale["radius"])
+            marker.scale.y = float(mesh_scale["radius"])
+            marker.scale.z = float(mesh_scale["radius"])
         marker.color.r = 0.5
         marker.color.g = 0.5
         marker.color.b = 0.5
