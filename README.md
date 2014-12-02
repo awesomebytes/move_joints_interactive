@@ -30,8 +30,9 @@ Should work with robots using ros_control and joint_trajectory_controller contro
 === 
 
 TODO: 
-* Check IK if the movement is safe (make it optional but enabled by default).
+* Check IK if the movement is safe (make it optional but enabled by default). Maybe add menu config to enable/disable also.
 * Give other backend controllers (joint_states without controller like MoveIt!? 
-also other controllers, I've only used joint_trajectory controllers)
+also other controllers, I've only used joint_trajectory controllers) robot state publisher is who needs to be sent messages.
 * Enable options to override sizes of markers and meshes.
 * Make it work with other robots (pr2 initiated)
+* Fix mesh parsing as links without visual tag crash the function
