@@ -33,7 +33,11 @@ def get_link_mesh_info(link_name, key='robot_description'):
             if name_link == link_name:
                 #print "Found " + joint_name + "!!"
                 # visual > geometry > mesh
-                visual_tag = child.getElementsByTagName('visual')[0]
+                try: # there are frames that are links without visual :/
+                    visual_tag = child.getElementsByTagName('visual')[0]
+                except:
+                    print "Warning: No visual tag for " + name_link
+                    continue
                 for _child in visual_tag.childNodes:
                     if _child.nodeType is _child.TEXT_NODE:
                         continue
