@@ -28,6 +28,9 @@ class LinkInteractiveMarker():
         self.base_name = joint_name.replace('_joint', '')
         # Get joint limits for the marker
         free_joints = get_joint_limits()
+        if not free_joints.has_key(joint_name):
+            rospy.logerr("Could not find '" + joint_name + "' in the free joints dictionary, there will be no Interactive Marker.")
+            return
         if free_joints[joint_name]["has_position_limits"]:
             self.upper_joint_limit = float(free_joints[joint_name]["max_position"])
             self.lower_joint_limit = float(free_joints[joint_name]["min_position"])
